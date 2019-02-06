@@ -14,6 +14,10 @@
 int rightDistanceLeft = 0, leftDistanceLeft = 0, middleDistanceLeft = 0;
 int rightDistanceRight = 0, leftDistanceRight = 0, middleDistanceRight = 0;
 
+
+long duration, cm;
+
+
 void delays(unsigned long t) {
   for(unsigned long i = 0; i < t; i++) {
     delay(1);
@@ -21,21 +25,36 @@ void delays(unsigned long t) {
 }
 
 int getDistanceLeft() {
-  digitalWrite(TRIG_PIN_LEFT, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN_LEFT, HIGH);
-  delayMicroseconds(20);
-  digitalWrite(TRIG_PIN_LEFT, LOW);
-  return (int)pulseIn(ECHO_PIN_LEFT, HIGH) / 58; // in cm
+   pinMode(TRIG_PIN_LEFT, OUTPUT);
+   digitalWrite(TRIG_PIN_LEFT, LOW);
+   delayMicroseconds(2);
+   digitalWrite(TRIG_PIN_LEFT, HIGH);
+   delayMicroseconds(10);
+   digitalWrite(TRIG_PIN_LEFT, LOW);
+   pinMode(ECHO_PIN_LEFT, INPUT);
+   duration = pulseIn(ECHO_PIN_LEFT, HIGH);
+   cm = microsecondsToCentimeters(duration);
+   pinMode(TRIG_PIN_LEFT, OUTPUT);
+   delay(2);
+   
+   return cm;
+   
 }
 
 int getDistanceRight() {
-  digitalWrite(TRIG_PIN_RIGHT, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN_RIGHT, HIGH);
-  delayMicroseconds(20);
-  digitalWrite(TRIG_PIN_RIGHT, LOW);
-  return (int)pulseIn(ECHO_PIN_RIGHT, HIGH) / 58; // in cm
+   pinMode(TRIG_PIN_RIGHT, OUTPUT);
+   digitalWrite(TRIG_PIN_RIGHT, LOW);
+   delayMicroseconds(2);
+   digitalWrite(TRIG_PIN_RIGHT, HIGH);
+   delayMicroseconds(10);
+   digitalWrite(TRIG_PIN_RIGHT, LOW);
+   pinMode(ECHO_PIN_RIGHT, INPUT);
+   duration = pulseIn(ECHO_PIN_RIGHT, HIGH);
+   cm = microsecondsToCentimeters(duration);
+   pinMode(TRIG_PIN_RIGHT, OUTPUT);
+   delay(2);
+  
+   return cm;
 }
 
 void forward(int carSpeed, bool debug = false){ 
@@ -45,7 +64,10 @@ void forward(int carSpeed, bool debug = false){
   digitalWrite(IN2,LOW);
   digitalWrite(IN3,LOW);
   digitalWrite(IN4,HIGH);
-  Serial.println("Go forward!");
+  Serial.print("Go forward at ");
+  Serial.println(carSpeed);
+
+  
 }
 
 void back(int carSpeed, bool debug = false){
@@ -55,7 +77,8 @@ void back(int carSpeed, bool debug = false){
   digitalWrite(IN2,HIGH);
   digitalWrite(IN3,HIGH);
   digitalWrite(IN4,LOW);
-  Serial.println("Go back!");
+  Serial.print("Go back at ");
+  Serial.println(carSpeed);
 }
 
 void left(int carSpeed, bool debug = false){
@@ -63,8 +86,8 @@ void left(int carSpeed, bool debug = false){
   analogWrite(ENB,carSpeed);
   digitalWrite(IN1,LOW);
   digitalWrite(IN2,HIGH);
-  digitalWrite(IN3,LOW);
-  digitalWrite(IN4,HIGH); 
+  digitalWrite(IN3,HIGH);
+  digitalWrite(IN4,LOW); 
   Serial.println("Go left!");
 }
 
@@ -85,9 +108,6 @@ void stop(bool debug = false){
 }
 
 void distanceReadings() {
-//  if(func_mode == ObstaclesAvoidance){
-//    servo.write(90);
-    delays(500);
     middleDistanceLeft = getDistanceLeft();
     middleDistanceRight = getDistanceRight();
     Serial.println("--------------------");
@@ -95,56 +115,19 @@ void distanceReadings() {
     Serial.println(middleDistanceLeft);
     Serial.print("RightReading: ");
     Serial.println(middleDistanceRight);
-//    if(middleDistance <= 40) {
-//      stop();
-//      delays(500);
-////      servo.write(10);
-//      right();
-//      delays(180);
-////      delays(1000);
-//      rightDistanceLeft = getDistanceLeft();
-//      rightDistanceRight = getDistanceRight();
-//      
-//      
-//      delays(500);
-////      servo.write(90);
-//      left();
-//      delays(360);
-////      delays(1000);
-////      servo.write(170);
-////      delays(1000); 
-//      leftDistanceLeft = getDistanceLeft();
-//      leftDistanceRight = getDistanceRight();
-//      
-//      delays(500);
-////      servo.write(90);
-//      delays(1000);
-//      if(rightDistance > leftDistance) {
-//        right();
-//        delays(360);
-//      } else if(rightDistance < leftDistance) {
-//        left();
-//        delays(360);
-//      } else if((rightDistance <= 40) || (leftDistance <= 40)) {
-//        back();
-//        delays(180);
-//      } else {
-//        forward();
-//      }
-//    } else {
-//        forward();
-//    }  
-//  }  
+    if (middleDistanceLeft <= 20 || middleDistanceRight <= 20){
+      right(250);
+      delay(250);
+      stop();
+    } else {
+      back(200);
+      delay(100);
+      stop();
+    }
 }
 
 void setup() {
   Serial.begin(9600);
-  // Left ultrasonic sensor
-  pinMode(ECHO_PIN_LEFT, INPUT);
-  pinMode(TRIG_PIN_LEFT, OUTPUT);
-  // Right ultrasonic sensor
-  pinMode(ECHO_PIN_RIGHT, INPUT);
-  pinMode(TRIG_PIN_RIGHT, OUTPUT);
   // Wheels
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
@@ -156,15 +139,8 @@ void setup() {
 
 void loop() {
   distanceReadings();
-  
+}
 
-  
-//  forward();
-//  delays(5000);
-//  stop();
-//  delays(3000);
-//  back();
-//  delays(5000);
-//  stop();
-//  delays(3000);
+long microsecondsToCentimeters(long microseconds) {
+   return microseconds / 29 / 2;
 }
