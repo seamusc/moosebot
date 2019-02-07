@@ -3,11 +3,11 @@
 #define BALL_COUNTER_PIN 3
 
 // Right one
-//const byte MY_ADDRESS = 25;
-//const byte RPI_ADDRESS = 42;
+const byte MY_ADDRESS = 25;
+const byte RPI_ADDRESS = 42;
 // Left one
-const byte MY_ADDRESS = 42;
-const byte RPI_ADDRESS = 25;
+//const byte MY_ADDRESS = 42;
+//const byte RPI_ADDRESS = 25;
 int RpiData[5];
 bool gotSignalFromIR = false;
 byte ballCounter = 0;
@@ -78,7 +78,7 @@ void setup() {
 void loop() {
   delay(200);
   processRpiData();
-  //sendBallPickedUpSignal();
+  sendBallPickedUpSignal();
   delay(2000);
 }
 
@@ -118,8 +118,8 @@ void receiveEvent(int bytes) {
   for (int i = 1; i <= bytes; i++) {
     RpiData[i] = Wire.read();
     Serial.print("[");
-    Serial.print("i");
-    Serial.println("] = ");
+    Serial.print(i);
+    Serial.print("] = ");
     Serial.println(RpiData[i]);
   }
 }
