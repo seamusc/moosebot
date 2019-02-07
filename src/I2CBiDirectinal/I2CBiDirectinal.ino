@@ -1,11 +1,19 @@
 #include <Wire.h>
 
-#define IR_PIN 3;
+#define BALL_COUNTER_PIN 3
 
-const byte MY_ADDRESS = 25;
-const byte RPI_ADDRESS = 42;
+// Right one
+//const byte MY_ADDRESS = 25;
+//const byte RPI_ADDRESS = 42;
+// Left one
+const byte MY_ADDRESS = 42;
+const byte RPI_ADDRESS = 25;
 int RpiData[5];
-bool gotSignalFromIR = true;
+bool gotSignalFromIR = false;
+byte ballCounter = 0;
+bool isBallPassing = true;
+
+int val;
 
 /**
  * Defines modes of moving the robot
@@ -22,9 +30,10 @@ enum BALLVISIBILITY {
  * Processes RPi data, received from I2C
  */
 void processRpiData() {
+  Serial.println("------Checking for new data from I2C------");
   if(RpiData[0] == 1) {
     // New data came in
-    Serial.println('------Processing new Rpi data------');
+    Serial.println("------Processing new Rpi data------");
     if(RpiData[1] == 0) {
       // Ball is not detected
       movement_mode = RANDOM;
@@ -49,21 +58,49 @@ void processRpiData() {
 void sendBallPickedUpSignal() {
   if(gotSignalFromIR) {
     Wire.beginTransmission(RPI_ADDRESS);
-    Wire.write(1);
+    Wire.write(ballCounter);
     Wire.endTransmission();
     delay(200);
+    ballCounter = 0;
+    gotSignalFromIR = false;
   }
 }
 
 void setup() {
   Serial.begin(9600);
-  Wire.begin (MY_ADDRESS);
+  pinMode(BALL_COUNTER_PIN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(3), counter_ISR, RISING);
+  
+  Wire.begin(MY_ADDRESS);
   Wire.onReceive(receiveEvent);    
 }
 
 void loop() {
+  delay(200);
   processRpiData();
-  sendBallPickedUpSignal();
+  //sendBallPickedUpSignal();
+  delay(2000);
+}
+
+/**
+ * ISR for the IR sensor
+ */
+void counter_ISR() {
+  delay(500);
+  val = digitalRead(BALL_COUNTER_PIN);
+  if (val == HIGH) {
+    if (!isBallPassing){
+      isBallPassing = true;
+      ballCounter++;
+      gotSignalFromIR = true;
+      Serial.print(">>>>> Num balls collected so far: ");
+      Serial.println(ballCounter);
+      delay(50);
+    }
+  } else {
+    delay(50);
+    isBallPassing = false;
+  }
 }
 
 /**
@@ -77,12 +114,12 @@ void loop() {
  */
 void receiveEvent(int bytes) {
   RpiData[0] = 1; // Mark as new data arrived
-  Serial.println('>>>>>> I2C new data received!');
+  Serial.println(">>>>>> I2C new data received!");
   for (int i = 1; i <= bytes; i++) {
     RpiData[i] = Wire.read();
-    Serial.println('[');
-    Serial.println('i');
-    Serial.println('] = ');
-    Serial.println('RpiData[i]');
+    Serial.print("[");
+    Serial.print("i");
+    Serial.println("] = ");
+    Serial.println(RpiData[i]);
   }
 }
