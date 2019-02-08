@@ -3,12 +3,12 @@
 #define BALL_COUNTER_PIN 3
 
 // Right one
-const byte MY_ADDRESS = 25;
-const byte RPI_ADDRESS = 42;
+//const byte MY_ADDRESS = 25;
+//const byte RPI_ADDRESS = 42;
 // Left one
-//const byte MY_ADDRESS = 42;
-//const byte RPI_ADDRESS = 25;
-int RpiData[5];
+const byte MY_ADDRESS = 42;
+const byte RPI_ADDRESS = 25;
+int RpiData[3];
 bool gotSignalFromIR = false;
 byte ballCounter = 0;
 bool isBallPassing = true;
@@ -37,15 +37,17 @@ void processRpiData() {
     if(RpiData[1] == 0) {
       // Ball is not detected
       movement_mode = RANDOM;
-    } else if (RpiData[2] == 1) {
-      // Ball is on the right
-      movement_mode = RIGHT;
-    } else if (RpiData[3] == 1) {
-      // Ball in center
-      movement_mode = FORWARD;
-    } else if (RpiData[4] == 1) {
-      // Ball on the left
-      movement_mode = LEFT;
+    } else {
+      if (RpiData[2] == ">") {
+        // Ball is on the right
+        movement_mode = RIGHT;
+      } else if (RpiData[2] == "|") {
+        // Ball in center
+        movement_mode = FORWARD;
+      } else if (RpiData[3] == "<") {
+        // Ball on the left
+        movement_mode = LEFT;
+      }
     }
     // Mark processing as done
     RpiData[0] = 0;
@@ -78,7 +80,7 @@ void setup() {
 void loop() {
   delay(200);
   processRpiData();
-  sendBallPickedUpSignal();
+  //sendBallPickedUpSignal();
   delay(2000);
 }
 
@@ -108,9 +110,7 @@ void counter_ISR() {
  * 4B from RPi
  * - [0] - New data received
  * - [1] - I see/don't see the ball
- * - [2] - ball is right
- * - [3] - ball is in center
- * - [4] - ball is left
+ * - [2] - Ball position: '<' - left; '|' - forward; '>' - right
  */
 void receiveEvent(int bytes) {
   RpiData[0] = 1; // Mark as new data arrived
@@ -118,8 +118,8 @@ void receiveEvent(int bytes) {
   for (int i = 1; i <= bytes; i++) {
     RpiData[i] = Wire.read();
     Serial.print("[");
-    Serial.print(i);
-    Serial.print("] = ");
+    Serial.print("i");
+    Serial.println("] = ");
     Serial.println(RpiData[i]);
   }
 }
