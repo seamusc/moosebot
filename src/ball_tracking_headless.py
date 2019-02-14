@@ -1,3 +1,4 @@
+# import the necessary packages
 from imutils.video import VideoStream
 import numpy as np
 import cv2
@@ -6,19 +7,23 @@ import time
 import sys
 
 
+# This one works
+#ball_cascade = cv2.CascadeClassifier('../samples/cascade_v5.xml')
+#class_scale = 1.01
+#class_neigh = 12
 
 #
-ball_cascade = cv2.CascadeClassifier('../samples/cascade_v14.xml')
+ball_cascade = cv2.CascadeClassifier('cascade_v14.xml')
 class_scale = 1.01
 class_neigh = 10
 
 
+# if a video path was not supplied, grab the reference
+# to the webcam
 vs = VideoStream(src=0).start()
 
+# allow the camera or video file to warm up
 time.sleep(2.0)
-
-counter = 260
-
 
 def directions(direct, near):
 	# Direction: -1 left, 0 centre, 1 right, 2 none
@@ -35,17 +40,24 @@ def directions(direct, near):
 	else:
 		print 'x'
 
+# keep looping
 while True:
+	# grab the current frame
 	frame = vs.read()
+
+	# if we are viewing a video and we did not grab a frame,
+	# then we have reached the end of the video
 	if frame is None:
 		break
 
-	# Resize if needed
-	WIDTH = 600 # 600
+	WIDTH = 250 # 600
 	HEIGHT = WIDTH *480 / 600
-	#frame = imutils.resize(frame, width=WIDTH)
+	frame = imutils.resize(frame, width=WIDTH)
 	frame_orig = frame.copy()
 
+	#gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	#balls = ball_cascade.detectMultiScale(gray, 1.3, 5)
+	#print balls
 	fy = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	balls = ball_cascade.detectMultiScale(fy, class_scale, class_neigh)
 
@@ -53,17 +65,13 @@ while True:
 	nearest_y = HEIGHT
 
 	for (x,y,w,h) in balls:
-		cv2.rectangle(frame,(x,y),(x+w,y+h),(255,255,0),2)
-
 		c_x = x + w/2
 		c_y = HEIGHT - y + h/2
 		if c_y < nearest_y:
 			nearest_y = c_y
 			nearest_x = c_x
-		print x, y, w, h, c_x, c_y
 	if nearest_y != HEIGHT:
 		near = False
-		print nearest_y, HEIGHT * 260 / 480
 		if nearest_y < HEIGHT * 260 / 480:
 			near = True
 		if nearest_x < WIDTH / 8 * 3:
@@ -79,20 +87,12 @@ while True:
 		#print 'x'
 
 
-	cv2.imshow("Frame", frame)
-
-	#if len(balls) != 1:
-	#	cv2.imwrite("sample%04d.png"%counter, frame_orig)
-	#	counter += 1
-
+	# if the 'q' key is pressed, stop the loop
 	key = cv2.waitKey(1) & 0xFF
-	if key == ord("c") and len(balls) < 3:
-		print "captured", counter
-		cv2.imwrite("sample%04d.png"%counter, frame_orig)
-		counter += 1
 	if key == ord("q"):
 		break
 
 vs.stop()
 
+# close all windows
 cv2.destroyAllWindows()

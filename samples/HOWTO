@@ -1,0 +1,28 @@
+
+# orig/ directory contains source pictures for positives
+
+# Adding positives:
+# - save cut-off into positive/ directory
+# - add item into positives.txt
+
+# Adding negatives:
+# - save negative into negative/ directory
+
+
+# Create positives
+# Note: --num must specify correct number of positives (wc -l positives.txt)
+opencv_createsamples -info positives.txt -w 16 -h 16 -vec pos.vec -num 43
+
+# Create negatives:
+ls negative/* > negatives.txt
+
+# Run classification
+opencv_traincascade -data classifier -vec pos.vec -bg negatives.txt -numStages 20 -minHitRate 0.999 -maxFalseAlarmRate 0.5 -numPos 43 -numNeg 2000 -w 16 -h 16 -mode ALL -precalcValBufSize 256 -precalcIdxBufSize 256
+
+# Note:
+# - classification takes a while
+# - process can be interrupted and run again
+# - in case of modifying classification parameters, remove old files from classifier/ directory
+
+# Find output in classifier/cascade.xml
+
